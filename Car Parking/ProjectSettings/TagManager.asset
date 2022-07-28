@@ -10,6 +10,8 @@ TagManager:
   - Platform
   - Stop
   - FirstStop
+  - FirstControl
+  - Diamond
   layers:
   - Default
   - TransparentFX
