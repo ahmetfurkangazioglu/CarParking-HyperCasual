@@ -8,15 +8,17 @@ public class Car : MonoBehaviour
     [SerializeField] GameManager manager;
     [SerializeField] GameObject[] WheelTruck;
     [SerializeField] GameObject ExplosionPoint;
-    bool StopPoint;
-    Transform Parent;
+    [HideInInspector] public bool StopPoint;
+    Transform Platform;
     bool StopControl;
+    bool StartRising;
+    double RisingValue;
+    bool CheckCarStop;
     void Start()
-    {       
-        Parent = GameObject.FindGameObjectWithTag("Platform").transform;
+    {
+        Platform = GameObject.FindGameObjectWithTag("Platform").transform;
         
     }
-
     void Update()
     {
         if (IsCarReady)
@@ -27,24 +29,50 @@ public class Car : MonoBehaviour
         {
             transform.Translate(transform.forward * 7f * Time.deltaTime);
         }
+        if (StartRising)
+        {
+            if (RisingValue>Platform.position.y)
+            {
+                Platform.position = Vector3.Lerp(Platform.position, new Vector3(Platform.position.x, Platform.position.y + 1.3f, Platform.position.z), .0080f);
+            }
+            else
+            {
+                StartRising = false;
+            }
+           
+        }
     }
-
+    private void OnCollisionEnter(Collision collision)
+    {
+         if (collision.gameObject.CompareTag("Car"))
+        {
+            CarSettings();
+            manager.GetCarLocked = true;
+            manager.Explosion.transform.position = ExplosionPoint.transform.position;
+            manager.Explosion.Play();
+            manager.Lose();        
+        }
+    }
     private void OnTriggerEnter(Collider other)
     {
         if (other.gameObject.CompareTag("FirstStop"))
         {
             StopPoint = true;
+            if (CheckCarStop)
+            {
+                manager.GetCarLocked = false;
+            }
+            CheckCarStop = true;
         }
        else  if (other.gameObject.CompareTag("Stop"))
         {
             if (StopControl)
             {
                 StopControl = false;
-                IsCarReady = false;
-                WheelTruck[0].SetActive(false);
-                WheelTruck[1].SetActive(false);
-                transform.SetParent(Parent);
+                CarSettings();
+                transform.SetParent(Platform);
                 manager.SetCar();
+                RisePlatformOperation();
             }    
         }
         else if (other.gameObject.CompareTag("FirstControl"))
@@ -52,23 +80,34 @@ public class Car : MonoBehaviour
             StopControl = true;
         }
         else if (other.gameObject.CompareTag("Platform"))
-        {
-            gameObject.SetActive(false);
+        {        
             manager.Explosion.transform.position = ExplosionPoint.transform.position;
             manager.Explosion.Play();
             manager.Lose();
+            CarSettings();
+            manager.GetCarLocked = true;
+            gameObject.SetActive(false);
         }
         else if (other.gameObject.CompareTag("Diamond"))
         {
+            manager.Voices[0].Play();
             manager.Diamond++;
             other.gameObject.SetActive(false);
         }
-        else if (other.gameObject.CompareTag("Car"))
+      
+    }
+    void RisePlatformOperation()
+    {
+        if (manager.IsThereRisingPlatform)
         {
-            IsCarReady = false;
-            manager.Explosion.transform.position = ExplosionPoint.transform.position;
-            manager.Explosion.Play();
-            manager.Lose();
+            StartRising = true;
+           RisingValue= Platform.position.y + 1.3;
         }
+    }
+    void CarSettings()
+    {
+        IsCarReady = false;
+        WheelTruck[0].SetActive(false);
+        WheelTruck[1].SetActive(false);
     }
 }

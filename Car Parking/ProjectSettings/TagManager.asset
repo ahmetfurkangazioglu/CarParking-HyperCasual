@@ -12,6 +12,7 @@ TagManager:
   - FirstStop
   - FirstControl
   - Diamond
+  - GameManager
   layers:
   - Default
   - TransparentFX
